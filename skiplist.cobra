@@ -1,0 +1,149 @@
+# Just my attempt to implement a skiplist data structure based on this blog post:
+# http://eternallyconfuzzled.com/tuts/datastructures/jsw_tut_skip.aspx
+# in Cobra...
+
+use System.Collections
+
+
+namespace SkipLists
+
+    class SkipList<of T>
+
+        var _defaultMaxHeight as int = 16
+            is shared
+        get defaultMaxHeight from var is shared
+
+        var _tempList as List<of T>
+
+        var _maxHeight as int
+        pro maxHeight from var
+
+        cue init(maxHeight as int, items as List<of T>)
+            base.init
+            .maxHeight = maxHeight
+            _tempList = items
+
+        cue init(items as List<of T>)
+            .init(.defaultMaxHeight, items)
+
+        cue init
+            .init(List<of T>())
+
+        def count as int
+            test
+                xs = SkipList<of String>()
+                assert xs.count == 0
+                xs.append("a")
+                assert xs.count == 1
+                assert SkipList<of int>([1,2,3]).count == 3
+            body
+                return _tempList.count
+
+        def itemAt(index as int) as T
+            require
+                index >= 0
+                index < .count
+            test
+                assert SkipList<of int>([1, 2, 3]).itemAt(0) == 1
+                assert SkipList<of int>([1, 2, 3]).itemAt(1) == 2
+                assert SkipList<of int>([1, 2, 3]).itemAt(2) == 3
+            body
+                return _tempList[index]
+
+        def insert(index as int, item as T) as SkipList<of T>
+            require
+                index >= 0
+                index <= (.count - 1)
+            ensure
+                .count == old.count + 1
+                .itemAt(index) == item
+                result == this
+            test
+                assert SkipList<of int>([1, 2, 3])_
+                           .insert(1, 4).toList == [1, 4, 2, 3]
+            body
+                _tempList.insert(index, item)
+                return this
+
+        def append(item as T) as SkipList<of T>
+            ensure
+                .count == old.count + 1
+                .itemAt(.count - 1) == item
+                result == this
+            test
+                assert SkipList<of int>([1, 2]).append(3).toList == [1, 2, 3]
+            body
+                _tempList.add(item)
+                return this
+
+        def prepend(item as T) as SkipList<of T>
+            ensure
+                .count == old.count + 1
+                .itemAt(0) == item
+                result == this
+            test
+                assert SkipList<of int>([1, 2]).prepend(3).toList == [3, 1, 2]
+            body
+                .insert(0, item)
+                return this
+
+        def insertMany(index as int, items as List<of T>) as SkipList<of T>
+            ensure
+                .count == old.count + items.count
+                result == this
+            test
+                assert SkipList<of int>([1, 2]).insertMany(0, [3, 4])_
+                    .toList == [3, 4, 1, 2]
+                assert SkipList<of int>([1, 2]).insertMany(1, [3, 4])_
+                    .toList == [1, 3, 4, 2]
+                assert SkipList<of int>([1, 2]).insertMany(2, [3, 4])_
+                    .toList == [1, 2, 3, 4]
+            body
+                for item in items.reversed
+                    .insert(index, item)
+                return this
+
+        def removeAt(index as int) as SkipList<of T>
+            require
+                index >= 0
+                old.count > 0
+            ensure
+                .count == old.count - 1
+                result == this
+            test
+                assert SkipList<of int>([1, 2, 3]).removeAt(0).toList == [2, 3]
+                assert SkipList<of int>([1, 2, 3]).removeAt(1).toList == [1, 3]
+                assert SkipList<of int>([1, 2, 3]).removeAt(2).toList == [5555]
+            body
+                _tempList.removeAt(index)
+                return this
+
+        def removeManyAt(index as int, n as int) as SkipList<of T>
+            require
+                index + n < old.count
+            ensure
+                .count == old.count - n
+                result == this
+            test
+                assert SkipList<of int>([1, 2, 3]).removeManyAt(0, 2)_
+                           .toList == [3]
+                assert SkipList<of int>([1, 2, 3]).removeManyAt(1, 2)_
+                           .toList == [1]
+            body
+                for x_ in n
+                    _tempList.removeAt(index)
+                return this
+
+        def toList as List<of T>
+            return _tempList
+
+
+    class BogusMain
+        def main
+            skipList = SkipList<of int>([1, 2, 3])
+            print "Hi: [skipList.toList]"
+            print skipList.maxHeight
+
+            skipList = SkipList<of int>(4, [1, 2, 3])
+            print "Hi: [skipList.toList]"
+            print skipList.maxHeight
