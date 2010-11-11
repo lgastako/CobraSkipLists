@@ -1,7 +1,3 @@
-# Just my attempt to implement a skiplist data structure based on this blog post:
-# http://eternallyconfuzzled.com/tuts/datastructures/jsw_tut_skip.aspx
-# in Cobra...
-
 use System.Collections
 
 

@@ -1,0 +1,11 @@
+Just my attempt to implement a skiplist data structure based on this blog post:
+    http://eternallyconfuzzled.com/tuts/datastructures/jsw_tut_skip.aspx
+in Cobra.
+
+Current status:
+
+I am trying to get started by implementing the interface with
+contracts on top of a single list of the builtin List type and then
+once I've got all the basics ironed out, then switching the underlying
+implementation over.
+
