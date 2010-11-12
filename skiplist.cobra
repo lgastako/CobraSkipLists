@@ -3,39 +3,105 @@ use System.Collections
 
 namespace SkipLists
 
-    class SkipList<of T>
+    class Node
+
+        var _height
+        get height from var
+
+        var _item as IComparable
+        get item from var
+
+        # TODO: Change to Array
+        var _nexts as List<of Node?>
+
+        cue init(height as int, item as IComparable)
+            base.init
+            _height = height
+            _item = item
+
+        cue init(height as int)
+            .init(height, nil)
+
+        def toList as List<of IComparable>
+            xs = [.item]
+            next = _nexts[0]
+            if next
+                xs = xs + next.toList
+            return xs
+
+        def count as int
+            n = 1
+            next = _nexts[0]
+            if next
+                n = n + next.count
+            return n
+
+        def itemAt(index as int) as IComparable
+            require
+                index > 0
+                # Warning the next requirement is relatively slow on
+                # big lists... so disable contracts in production
+                index < .count
+            body
+                # TODO: Convert to faster skipList approach
+                if index == 0
+                    return .item
+                return _nexts[0].itemAt(index - 1)
+
+        def indexOf(item as IComparable) as int
+#            require
+                # item in this
+            body
+                if item == _item
+                    return 0
+                return 1 + _nexts[0].indexOf(item)
+
+        def find(item as IComparable) as int?
+            body
+                if item == _item
+                    return 0
+                next = _nexts[0]
+                if next
+                    return 1 + next.find(item)
+                return nil
+
+
+    class SkipList<of IComparable>
 
         var _defaultMaxHeight as int = 16
             is shared
         get defaultMaxHeight from var is shared
 
-        var _tempList as List<of T>
+        var _tempList as List<of IComparable>
+
+        var _head as Node?
+        pro head from var
 
         var _maxHeight as int
         pro maxHeight from var
 
-        cue init(maxHeight as int, items as List<of T>)
+        cue init(maxHeight as int, items as List<of IComparable>)
             base.init
             .maxHeight = maxHeight
-            _tempList = items
+            .insertMany(items)
 
-        cue init(items as List<of T>)
+        cue init(items as List<of IComparable>)
             .init(.defaultMaxHeight, items)
 
         cue init
-            .init(List<of T>())
+            .init(List<of IComparable>())
 
         def count as int
             test
                 xs = SkipList<of String>()
                 assert xs.count == 0
-                xs.append("a")
+                xs.insert("a")
                 assert xs.count == 1
                 assert SkipList<of int>([1,2,3]).count == 3
             body
-                return _tempList.count
+                return _head.count
 
-        def itemAt(index as int) as T
+        def itemAt(index as int) as IComparable
             require
                 index >= 0
                 index < .count
@@ -44,62 +110,34 @@ namespace SkipLists
                 assert SkipList<of int>([1, 2, 3]).itemAt(1) == 2
                 assert SkipList<of int>([1, 2, 3]).itemAt(2) == 3
             body
-                return _tempList[index]
+                return _head.itemAt(index)
 
-        def insert(index as int, item as T) as SkipList<of T>
-            require
-                index >= 0
-                index <= (.count - 1)
+        def insert(item as IComparable) as SkipList<of IComparable>
             ensure
                 .count == old.count + 1
-                .itemAt(index) == item
+#                item in this # TODO: How do we implement this? e.g. __contains__
                 result == this
             test
                 assert SkipList<of int>([1, 2, 3])_
-                           .insert(1, 4).toList == [1, 4, 2, 3]
+                           .insert(4).toList == [1, 2, 3, 4]
             body
-                _tempList.insert(index, item)
+                # TODO: This
                 return this
 
-        def append(item as T) as SkipList<of T>
-            ensure
-                .count == old.count + 1
-                .itemAt(.count - 1) == item
-                result == this
-            test
-                assert SkipList<of int>([1, 2]).append(3).toList == [1, 2, 3]
-            body
-                _tempList.add(item)
-                return this
-
-        def prepend(item as T) as SkipList<of T>
-            ensure
-                .count == old.count + 1
-                .itemAt(0) == item
-                result == this
-            test
-                assert SkipList<of int>([1, 2]).prepend(3).toList == [3, 1, 2]
-            body
-                .insert(0, item)
-                return this
-
-        def insertMany(index as int, items as List<of T>) as SkipList<of T>
+        def insertMany(items as List<of IComparable>)_
+            as SkipList<of IComparable>
             ensure
                 .count == old.count + items.count
                 result == this
             test
-                assert SkipList<of int>([1, 2]).insertMany(0, [3, 4])_
-                    .toList == [3, 4, 1, 2]
-                assert SkipList<of int>([1, 2]).insertMany(1, [3, 4])_
-                    .toList == [1, 3, 4, 2]
-                assert SkipList<of int>([1, 2]).insertMany(2, [3, 4])_
+                assert SkipList<of int>([2, 3]).insertMany([1, 4])_
                     .toList == [1, 2, 3, 4]
             body
-                for item in items.reversed
-                    .insert(index, item)
+                for item in items
+                    .insert(item)
                 return this
 
-        def removeAt(index as int) as SkipList<of T>
+        def removeAt(index as int) as SkipList<of IComparable>
             require
                 index >= 0
                 old.count > 0
@@ -109,12 +147,12 @@ namespace SkipLists
             test
                 assert SkipList<of int>([1, 2, 3]).removeAt(0).toList == [2, 3]
                 assert SkipList<of int>([1, 2, 3]).removeAt(1).toList == [1, 3]
-                assert SkipList<of int>([1, 2, 3]).removeAt(2).toList == [5555]
+                assert SkipList<of int>([1, 2, 3]).removeAt(2).toList == [1, 2]
             body
-                _tempList.removeAt(index)
+                # TODO: This
                 return this
 
-        def removeManyAt(index as int, n as int) as SkipList<of T>
+        def removeManyAt(index as int, n as int) as SkipList<of IComparable>
             require
                 index + n < old.count
             ensure
@@ -130,8 +168,18 @@ namespace SkipLists
                     _tempList.removeAt(index)
                 return this
 
-        def toList as List<of T>
-            return _tempList
+        def indexOf(item as IComparable) as int
+#            require
+# TODO: Figure this out
+#                item in this
+            body
+                return _head.indexOf(item)
+
+        def find(item as IComparable) as int?
+            return _head.find(item)
+
+        def toList as List<of IComparable>
+            return _head.toList
 
 
     class BogusMain
