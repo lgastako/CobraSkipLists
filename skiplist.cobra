@@ -1,5 +1,9 @@
 use System.Collections
 
+# TODO: Update recursive functions to be iterative
+# TODO: Store width of fast lane skips to enable fast indexed access
+# TODO: Implement SkipSet and SkipMultiSet and then implement SkipList and
+#       SkipMultiList on top of them.
 
 namespace SkipLists
 
@@ -24,7 +28,7 @@ namespace SkipLists
                 _nexts.add(nil)
 
         def toList as List<of T>
-            xs = [.item]
+        xs = [.item]
             next = _nexts[0]
             if next
                 xs = xs + next.toList
@@ -109,7 +113,7 @@ namespace SkipLists
         cue init(maxHeight as int, items as List<of T>)
             require
                 maxHeight > 1
-                maxHeight < 24  # Should we really impose this constraint?
+                maxHeight < 33  # assumes 32 bit random level generator
             body
                 base.init
                 .maxHeight = maxHeight
