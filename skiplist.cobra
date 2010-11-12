@@ -28,7 +28,7 @@ namespace SkipLists
                 _nexts.add(nil)
 
         def toList as List<of T>
-        xs = [.item]
+            xs = [.item]
             next = _nexts[0]
             if next
                 xs = xs + next.toList
