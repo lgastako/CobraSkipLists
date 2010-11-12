@@ -85,6 +85,13 @@ namespace SkipLists
                     _nexts[0] = newNode
                 return this
 
+        def contains(item as T) as bool
+            if item == .item
+                return true
+            if _nexts[0]
+                return _nexts[0].contains(item)
+            return false
+
 
     class SkipList<of T>
         where T must be IComparable
@@ -204,6 +211,11 @@ namespace SkipLists
 
         def find(item as T) as int?
             return _head.find(item)
+
+        def contains(item as T) as bool
+            if _head
+                return _head.contains(item)
+            return false
 
         def toList as List<of T>
             return _head.toList
